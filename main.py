@@ -16,13 +16,14 @@ class Game:
         # initialize all variables and do all the setup for a new game
         self.load_data()
         self.all_sprites = pg.sprite.Group()
+        self.mines_left = MINENUMBER
+        self.game_over = False
         self.bg = bg(self)
         self.tiles = {}
         self.first_click = False
         for x in range(TILEX):
             for y in range(TILEY):
                 self.tiles[(x,y)]= tile(self,x,y)
-        self.game_over = False
         self.mouse_pos = []
 
     def place_mines(self,x,y):
@@ -68,13 +69,22 @@ class Game:
         self.all_sprites.draw(self.screen)
         pg.display.flip()
 
-    def end(self):
+    def end(self,victory):
         self.game_over = True
         for tile in self.tiles.values():
             if tile.mine:
                 tile.image.blit(self.mine,(0,0))
+        self.bg.update_counter()
+        if victory:
+            self.draw_text(self.bg.image,'YOU WIN!',int(WIDTH/2),40,VERYDARKGRAY,40)
+        else:
+            self.draw_text(self.bg.image,'GAME OVER',int(WIDTH/2),40,VERYDARKGRAY,40)
 
-        self.draw_text(self.bg.image,'GAME OVER',int(WIDTH/2),40,VERYDARKGRAY,50)
+    def victory_check(self):
+        for tile in self.tiles.values():
+            if not tile.revealed and not tile.mine:
+                return False
+        return True
 
     def events(self):
         # catch all events here
@@ -106,7 +116,13 @@ class Game:
                     elif event.button == 3:
                         for tile in self.tiles.values():
                             if tile.rect.collidepoint(self.mouse_pos) and not tile.revealed:
-                                tile.flag()
+                                if tile.flag():
+                                    self.mines_left -= 1
+                                else:
+                                    self.mines_left += 1
+                        self.bg.update_counter()
+                    if self.victory_check():
+                        self.end(True)
 
     def draw_text(self,surface,text,x,y,color,size):
         font_name = pg.font.match_font(FONT_NAME)

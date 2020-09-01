@@ -13,11 +13,9 @@ class bg(pg.sprite.Sprite):
         self.rect.y = 0
 
         'add top box'
-        pg.draw.rect(self.image,DARKGRAY,pg.Rect((SCREEN_BORDER,SCREEN_BORDER),(WIDTH-2*SCREEN_BORDER,TOPLEFT[1])))
-
+        self.update_counter()
         'add tile backdrop'
         pg.draw.rect(self.image,VERYDARKGRAY,pg.Rect((TOPLEFT[0]-2,TOPLEFT[1]+10+SCREEN_BORDER-2),(WIDTH - SCREEN_BORDER*2+5,HEIGHT-TOPLEFT[1]-3*SCREEN_BORDER+5)))
-
         self.draw_lines()
 
     def draw_lines(self):
@@ -26,8 +24,10 @@ class bg(pg.sprite.Sprite):
         for y in range(1,TILEY):
             pg.draw.line(self.image,VERYDARKGRAY,(TOPLEFT[0],TOPLEFT[1]+10+SCREEN_BORDER + y*TILESIZE),(WIDTH - TOPLEFT[0],TOPLEFT[1]+10+SCREEN_BORDER + y*TILESIZE))
 
-    def update(self):
-        pass
+    def update_counter(self):
+        pg.draw.rect(self.image,DARKGRAY,pg.Rect((SCREEN_BORDER,SCREEN_BORDER),(WIDTH-2*SCREEN_BORDER,TOPLEFT[1])))
+        if not self.game.game_over:
+            self.game.draw_text(self.image,str(self.game.mines_left),WIDTH/2,(3*SCREEN_BORDER+TOPLEFT[1])/2,VERYDARKGRAY,50)
 
 class tile(pg.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -68,14 +68,16 @@ class tile(pg.sprite.Sprite):
         if self.flagged:
             self.image.fill(VERYLIGHTGRAY)
             self.flagged = False
+            return False
         else:
             self.image.blit(self.game.flag,(0,0))
             self.flagged = True
+            return True
 
     def reveal(self):
         if not self.flagged:
             if self.mine:
-                self.game.end()
+                self.game.end(False)
             else:
                 self.revealed = True
                 self.image.fill(LIGHTGRAY)
